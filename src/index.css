@@ -5,9 +5,80 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  background-color: #f3f3f3 !important;
+
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+.content-meta info {
+  display: table;
+  width: 100%;
+  margin: 10px 0 15px;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.content-meta.info .meta-row {
+  display: table-row;
+  width: 100%;
+}
+
+.clearfix {
+  clear: both;
+}
+.clearfix {
+  clear: both;
+}
+
+.content-meta.info .meta-row .meta-label, .content-meta.info .meta-row .meta-value {
+  display: table-cell;
+  min-height: 1px;
+  padding: 0 10px;
+  position: relative;
+  vertical-align: top;
+}
+
+.content-meta.info .meta-row .meta-label {
+  font-weight: 700;
+  text-align: right;
+  width: 30%;
+}
+.subtle {
+  color: #757a84;
+}
+
+.content-meta.info .meta-row .meta-label, .content-meta.info .meta-row .meta-value {
+  display: table-cell;
+  min-height: 1px;
+  padding: 0 10px;
+  position: relative;
+  vertical-align: top;
+}
+
+.content-meta.info .meta-row .meta-value {
+  text-align: left;
+  width: 77%;
+}
+
+.scoreboard__title {
+  margin: 0;
+  text-transform: uppercase;
+  font-family: Neusa,Impact,Helvetica Neue,Arial,Sans-Serif;
+  font-size: 1.625em;
+  font-weight: 500;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: .92;
+  letter-spacing: normal;
+  text-align: center;
+  color: #2a2c32;
 }
