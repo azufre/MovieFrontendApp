@@ -1,53 +1,72 @@
 import {React, Component} from 'react';
 import { withRouter } from "react-router";
 import axios from 'axios';
-import { Card, Button } from 'react-bootstrap';
-import ReactStars from "react-rating-stars-component";
 
 import RateReviewView from './RateReviewView';
+import { Link } from 'react-router-dom';
+
+import ReactStars from "react-rating-stars-component";
+import { Card, Button, Form } from 'react-bootstrap';
 
 class Movie extends Component{
 
-    url_movie_detail = 'http://localhost:8000/api/movie/view';
-    url_rate_review_list = 'http://localhost:8000/api/ratereview/list';
+    url_movie_detail = `${process.env.REACT_APP_API_BACKEND}/api/movie/view`;
+    url_rate_review_list = `${process.env.REACT_APP_API_BACKEND}/api/ratereview/list`
+    url_rate_review_create = `${process.env.REACT_APP_API_BACKEND}/api/ratereview/create/`
+
     state = {
         movie:{},
-        rateRevies:[],
-        rateRevie:{
-            rewiew:'',
-            stars: 0,
+        rateReviews:[],
+        rateReview:{
+            review:'',
+            stars: 1,
             movie: 0,
         },
+        isAlreadyRatedThisMovieByCurrentUser:false,
+        currentRateReviewFromDatabase:{},
         isMovieNotFound:false,
+        isLoadingRateReviews:true,
+        isLoadingMovie:true,        
     }
 
     ratingChanged = (newRating) => {
-        
         this.setState(prevstate => ({
-           ...prevstate, rateRevie: {
-            ...prevstate.rateRevie,
-                stars: newRating
-           }
-        }));
-
+            rateReview:{
+                ...prevstate.rateReview,
+                stars:newRating
+            }
+        }))
     };
 
     handle_change = e => {
         const value = e.target.value;
         this.setState(prevstate => ({
-            ...prevstate, rateRevie: {
-                ...prevstate.rateRevie,
-                rewiew: value
+                rateReview: {
+                ...prevstate.rateReview,
+                review: value
             }
          }));
       };
 
-      handle_ratereview = (e) => {
+    handle_ratereview = (e) => {
 
-        console.log(this.state.rateRevie);
+        const token = localStorage.getItem('auth_token');
+
+        if(!token){
+            this.props.history.push('/')
+        }
+
+        axios.put(this.url_rate_review_create, this.state.rateReview, {headers: {'Authorization': `Token ${token}`}}).then(response =>{
+            this.setState({
+                currentRateReviewFromDatabase:response.data,
+                isAlreadyRatedThisMovieByCurrentUser:true
+            });
+        });        
+
         e.preventDefault();
 
-      }
+    }
+
 
     componentDidMount(){
 
@@ -58,20 +77,43 @@ class Movie extends Component{
             this.setState({movie:response.data});
 
             this.setState(prevstate => ({
-                ...prevstate, rateRevie: {
-                    ...prevstate.rateRevie,
+                ...prevstate, rateReview: {
+                    ...prevstate.rateReview,
                     movie: parseInt(pk)
                 }
-             }));
+             }));            
 
             axios.get(`${this.url_rate_review_list}/?idmovie=${pk}`).then(response => {
-                this.setState({rateRevies:response.data});
+                
+                if(response.data.length !== 0){
+
+                    const currentRateReviewByCurrentUser = response.data.filter((q) => q.owner === this.props.current_user);
+
+                    if(currentRateReviewByCurrentUser.length !== 0){
+
+                        this.setState(prevstate => ({
+                            ...prevstate, isAlreadyRatedThisMovieByCurrentUser: true, 
+                            currentRateReviewFromDatabase: currentRateReviewByCurrentUser[0]
+                         }));
+
+                    }
+
+                    this.setState(prevstate => ({
+                        ...prevstate, isLoadingRateReviews: false, 
+                     }));
+
+                }                
+
+                this.setState({rateReviews:response.data.filter((q) => q.owner !== this.props.current_user)});
             });
+
+            this.setState(prevstate => ({
+                ...prevstate, isLoadingMovie: false, 
+             }));
             
         }).catch(error => {
             if(error.response.status && error.response.status === 404){
-                console.log('aqo');
-                this.setState({isMovieNotFound: true});
+                this.setState({isMovieNotFound: true, isLoadingMovie: false});                
             }
         });
         
@@ -79,7 +121,7 @@ class Movie extends Component{
 
     render(){
 
-        const RateReviews = this.state.rateRevies.map(q => <RateReviewView ratereview={q} key={q.pk}/>);
+        const RateReviews = this.state.rateReviews.map(q => <RateReviewView ratereview={q} key={q.pk}/>);
 
         const MovieNotFound = (
             <div style={{'backgroundColor':'white', 'padding':'15px', 'margin':'auto'}}>
@@ -89,9 +131,21 @@ class Movie extends Component{
                 
             </div>
         );
+        
+        const DefaultMessageUserNoLogged = (
+            <>
+                <span style={{'margin':'15px'}}>
+                    To rate and review this movie you must be logged.  &nbsp;
+                    <Link to={{pathname: '/login', state: { prevPath: this.props.location }}}>Login</Link>
+                </span>                
+            </>
+        );
+
 
         return (
-           this.state.isMovieNotFound === true ? MovieNotFound : <div style={{'backgroundColor':'white', 'padding':'15px', 'margin':'auto'}}>
+           <>
+           {this.props.isLoadingMovie ? <>Loading...</> : <>
+                {this.state.isMovieNotFound === true ? MovieNotFound : <div style={{'backgroundColor':'white', 'padding':'15px', 'margin':'auto'}}>
             
                 <span className="scoreboard__title" style={{'marginLeft':'75px', 'marginBottom': '20px', 'marginTop':'20px', 'fontWeight':'bold', 'display':'block', 'fontSize':'24px'}}>Movie Information</span>
                 
@@ -142,34 +196,45 @@ class Movie extends Component{
                 <span className="scoreboard__title" style={{'marginLeft':'75px', 'marginTop':'20px', 'display':'block'}}>Audience Review</span>
 
                 <div style={{
-                        'display': 'flex',
-                        'flexWrap': 'wrap',
-                        'justifyContent': 'center',
-                    }}>
-                    <Card border="primary" style={{ width: '25rem', 'margin': '15px' }}>
-                        <Card.Header>
-                            {this.props.current_user}   
-                        </Card.Header>
-                        <Card.Body>
-                        <Card.Title>Rate Review</Card.Title>
-                        <form onSubmit={this.handle_ratereview}>
-                            <Card.Text>
-                                <textarea onChange={this.handle_change} style={{'width':'100%', 'height':'100px'}} maxLength="255"></textarea>                       
-                            </Card.Text>
-                            <ReactStars
-                                    count={5}
-                                    edit={true}
-                                    isHalf={false}
-                                    size={30}
-                                    value={0}
-                                    onChange={this.ratingChanged}
-                                    activeColor="#ffd700"
-                                />  
-                            <Button style={{'marginTop':  '15px'}} type="submit">Save</Button>
-                        </form>
-                        </Card.Body>
-                    </Card>
+                    'display': 'flex',
+                    'flexWrap': 'wrap',
+                    'justifyContent': 'center',
+                }}>
+                    
+                    {!this.props.current_user ? DefaultMessageUserNoLogged : 
+                       <>
+                       {this.state.isAlreadyRatedThisMovieByCurrentUser? <RateReviewView ratereview={this.state.currentRateReviewFromDatabase} /> :
+                            <Card border="primary" style={{ width: '25rem', 'margin': '15px' }}>
+                                <Card.Header>
+                                    {this.props.current_user}   
+                                </Card.Header>
+                                <Card.Body>
+                                <Card.Title>Rate Review</Card.Title>
+                                <form onSubmit={this.handle_ratereview}>
+                                    <Card.Text>
+                                        <Form.Control required as="textarea" rows={3} style={{'width':'100%', 'height':'100px'}} maxLength="255"  onChange={this.handle_change} value={this.state.rateReview.review} />              
+                                    </Card.Text>
+                                    <div>
+                                    <ReactStars
+                                            count={5}
+                                            edit={true}
+                                            isHalf={false}
+                                            size={30}
+                                            value={this.state.rateReview.stars}
+                                            onChange={this.ratingChanged}
+                                            activeColor="#ffd700"
+                                        />  
+                                    </div>
+                                    <Button style={{'marginTop':  '15px'}} type="submit">Save</Button>
+                                </form>
+                                </Card.Body>
+                            </Card>
+                            }
+                       </> 
+                    }
+                    
                 </div>
+                
 
                 <div style={{
                         'display': 'flex',
@@ -181,7 +246,9 @@ class Movie extends Component{
                     {RateReviews.length === 0 ? <span style={{'fontSize':'20px'}}>No rate review yet be the first one.</span> : RateReviews}
                 </div>
 
-            </div>
+            </div>}
+                </>}
+           </>
         );
     }
 

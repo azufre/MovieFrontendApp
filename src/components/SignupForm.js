@@ -43,7 +43,7 @@ class SignupForm extends React.Component {
 
   handle_login = (e) => {
 
-    const url_register = 'http://localhost:8000/auth/users/';
+    const url_register = `${process.env.REACT_APP_API_BACKEND}/auth/users/`;
     const data = this.state.form;
     this.setState({disabled:true});
 

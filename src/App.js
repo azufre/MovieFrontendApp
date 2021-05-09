@@ -35,7 +35,7 @@ class App extends Component {
                 <BarNavegation current_user={currentUser} setCurrentUser={this.setCurrentUser}/>
                 <Container>
                 <Switch>                    
-                    <GuardRouteNoAuthRequired path='/login' component={LoginForm} propsComponent={{'setCurrentUser':this.setCurrentUser}}/>
+                    <GuardRouteNoAuthRequired path='/login' component={LoginForm} setCurrentUser={this.setCurrentUser}/>
                     <Route path='/singup'>
                       <SignupForm />
                     </Route>

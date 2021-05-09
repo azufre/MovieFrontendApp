@@ -10,10 +10,21 @@ class LoginForm extends React.Component {
     password: '',
     IsLoginSuccess: true,
     disabled:false,
+    prevPath: '/'
   };
 
-  url_login = 'http://localhost:8000/auth/token/login/';
-  url_me = 'http://localhost:8000/auth/users/me/';
+  url_login = `${process.env.REACT_APP_API_BACKEND}/auth/token/login/`;
+  url_me = `${process.env.REACT_APP_API_BACKEND}/auth/users/me/`;
+
+  componentDidMount(){
+    
+    if(this.props.location.state){
+      this.setState({
+        prevPath:this.props.location.state.prevPath.pathname
+      });
+    }
+
+  }
 
   handle_change = e => {
     const name = e.target.name;
@@ -29,7 +40,7 @@ class LoginForm extends React.Component {
 
     this.setState({disabled:true});
 
-    axios.post(this.url_login, this.state).then(res => {
+    axios.post(this.url_login, {email:this.state.email, password:this.state.password}).then(res => {
       
       localStorage.setItem('auth_token', res.data.auth_token);  
       
@@ -37,7 +48,7 @@ class LoginForm extends React.Component {
           
         localStorage.setItem('current_user', res.data.username);
         this.props.setCurrentUser(res.data.username);
-        this.props.history.push("/");
+        this.props.history.push(this.state.prevPath);
         
       })
       

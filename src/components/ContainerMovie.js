@@ -9,7 +9,7 @@ export default class ContainerMovie extends Component {
         
         super();
 
-        this.url_movie = 'http://localhost:8000/api/movie/list/';
+        this.url_movie = `${process.env.REACT_APP_API_BACKEND}/api/movie/list/`;
 
         this.state = {
             movies: []
@@ -46,7 +46,7 @@ export default class ContainerMovie extends Component {
         const movieCars = this.state.movies.map(movie => <MovieCard movie={movie} key={movie.pk} />);
         
         const NoMoviesFound = <>
-                                <p style={{'fontSize':18, 'padding':'15px'}}>Sorry movie not found</p>
+                                <p style={{'fontSize':18, 'padding':'15px'}}>Movies not found</p>
                               </>
 
         return (

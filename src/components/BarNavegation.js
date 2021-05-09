@@ -9,7 +9,7 @@ class BarNavegation extends Component {
      constructor(props){
        super(props);
                      
-       this.url_logout = 'http://localhost:8000/auth/token/logout/';
+       this.url_logout = `${process.env.REACT_APP_API_BACKEND}/auth/token/logout/`;
        
      }
                
